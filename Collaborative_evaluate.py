@@ -1,10 +1,7 @@
 import pandas as pd
 import numpy as np
-from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import CountVectorizer
-
-
 from Collaborative_Modeling import Modeling
 
 class ModelEvaluator:
@@ -33,21 +30,11 @@ class ModelEvaluator:
         ]
         return np.mean(precision_scores) if precision_scores else 0
 
-    def calculate_mae_rmse(self):
-        actual_ratings = self.modeling.sampled_data['user_rating'].values
-        predicted_ratings = np.random.randint(1, 101, len(actual_ratings))  # Placeholder for predicted ratings
-        mae = mean_absolute_error(actual_ratings, predicted_ratings)
-        rmse = np.sqrt(mean_squared_error(actual_ratings, predicted_ratings))
-        return mae, rmse
-
     def evaluate(self):
         self.modeling.create_similarity_matrix()
         mean_precision_score = self.mean_precision_at_k_all_users()
-        mae, rmse = self.calculate_mae_rmse()
-        return mean_precision_score, mae, rmse
-
-    def print_results(self, mean_precision_score, mae, rmse):
+        return mean_precision_score
+    
+    def print_results(self, mean_precision_score):
         print("Evaluation completed.")
         print(f"Mean Precision@{self.k}: {mean_precision_score}")
-        print(f"Mean Absolute Error (MAE): {mae}")
-        print(f"Root Mean Squared Error (RMSE): {rmse}")
