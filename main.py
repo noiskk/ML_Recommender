@@ -7,24 +7,8 @@ from ContentBased_evaluate import RecommenderEvaluator
 
 def main():
     listing = 'data/train_listing_with_visitors.csv'
-
-    input_data_path = 'data/train_data(v0.1).csv'
     updated_data_path = 'data/train_updated_data_visitors_and_ratings.csv'
-    test_data_path = 'data/test_data(v0.1).csv'
     updated_test_data_path = 'data/test_updated_data_visitors_and_ratings.csv'
-    listing = 'data/listing_with_visitors.csv'
-
-    print("Train data processing...")
-    data_add_train = DataAdd(input_data_path, updated_data_path)
-    data_add_train.process_data()
-    print("Train data processing completed.")
-    print("=======================")
-
-    print("Test data processing...")
-    data_add_test = DataAdd(test_data_path, updated_test_data_path)
-    data_add_test.process_data()
-    print("Test data processing completed.")
-    print("=======================")
 
     print("1. Collaborative Filtering")    
 
