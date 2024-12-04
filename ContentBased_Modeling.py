@@ -51,25 +51,45 @@ class ContentBasedModeling:
         
     def generate_user_profile(self, user_visited_listings):
         """사용자 프로파일 생성 (사용자의 방문한 숙소를 기반으로)"""
-        visited_features = self.features[self.listing['listing_id'].isin(user_visited_listings)]
+        # listing_id가 train 데이터에 있는 경우만 필터링
+        valid_listings = [lid for lid in user_visited_listings if lid in self.listing['listing_id'].values]
+        if not valid_listings:
+            raise ValueError("No valid listings found in training data")
+            
+        visited_features = self.features[self.listing['listing_id'].isin(valid_listings)]
         user_profile = visited_features.mean(axis=0)
         return user_profile
 
     def get_recommendations_with_user_preference(self, user_visited_listings, topn=10):
         """사용자 프로파일 기반 추천"""
-        user_profile = self.generate_user_profile(user_visited_listings)
-        
-        # Convert user_profile to a numpy array and reshape it
-        user_profile_array = user_profile.to_numpy().reshape(1, -1)
-        
-        # Calculate cosine similarity
-        cosine_sim = cosine_similarity(user_profile_array, self.feature_matrix)
-        
-        # Get the top indices
-        top_indices = cosine_sim[0].argsort()[-topn:][::-1]
-        
-        # Retrieve recommended listings
-        recommended_listings = self.listing.iloc[top_indices]
-        recommended_ids = recommended_listings['listing_id'].tolist()
-        
-        return recommended_listings, recommended_ids
+        try:
+            user_profile = self.generate_user_profile(user_visited_listings)
+            
+            # Convert user_profile to a numpy array and reshape it
+            user_profile_array = user_profile.to_numpy().reshape(1, -1)
+            
+            # Calculate cosine similarity
+            cosine_sim = cosine_similarity(user_profile_array, self.feature_matrix)
+            
+            # Get the top indices excluding already visited listings
+            all_indices = cosine_sim[0].argsort()[::-1]
+            visited_ids = set(user_visited_listings)
+            recommended_indices = []
+            
+            # Filter out already visited listings
+            for idx in all_indices:
+                listing_id = self.listing.iloc[idx]['listing_id']
+                if listing_id not in visited_ids:
+                    recommended_indices.append(idx)
+                if len(recommended_indices) >= topn:
+                    break
+            
+            # Retrieve recommended listings
+            recommended_listings = self.listing.iloc[recommended_indices]
+            recommended_ids = recommended_listings['listing_id'].tolist()
+            
+            return recommended_listings, recommended_ids
+            
+        except Exception as e:
+            print(f"Error generating recommendations: {str(e)}")
+            return pd.DataFrame(), []

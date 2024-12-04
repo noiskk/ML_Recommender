@@ -1,5 +1,4 @@
 from matplotlib import pyplot as plt
-from Processing import DataAdd
 from Collaborative_Modeling import ItemBasedModeling
 from Collaborative_evaluate import ItemBasedEvaluator
 from ContentBased_Modeling import ContentBasedModeling
@@ -10,48 +9,39 @@ def main():
     test_dataset = 'data/test_listing_with_visitors.csv'
 
     print("1. Collaborative Filtering")    
-
-    print("evaluation of train data...")
+    # train 데이터로 모델 학습
     item_modeling = ItemBasedModeling(train_dataset)
-    item_evaluator = ItemBasedEvaluator(item_modeling, k=10)
-    mean_precision_score, mae, rmse = item_evaluator.evaluate()
-    item_evaluator.print_results(mean_precision_score, mae, rmse)
-    print("evaluation completed.")
-    print("=======================")
-
-    print("evaluation on test data...")
-    item_modeling = ItemBasedModeling(test_dataset)
-    item_evaluator = ItemBasedEvaluator(item_modeling, k=10)
-    mean_precision_score, mae, rmse = item_evaluator.evaluate()
-    # 성능 분포 확인
+    item_modeling.create_similarity_matrix()  # 유사도 행렬 생성
+    
+    # test 데이터로 평가
+    print("Evaluating on test data...")
+    test_evaluator = ItemBasedEvaluator(item_modeling, k=10, test_file=test_dataset)
+    results_df = test_evaluator.evaluate_model(sample_size=100)
+    
     print("\nPerformance Distribution:")
-    print(stats_df[['precision', 'recall']].describe())
-
-    print(f"Evaluation Results on Random Sample:")
-    print(f"Precision@10: {avg_precision:.4f}")
-    print(f"Recall@10: {avg_recall:.4f}") 
-
+    print(results_df[['precision', 'recall']].describe())
+    print(f"\nEvaluation Results:")
+    print(f"Average Precision@{10}: {results_df['precision'].mean():.4f}")
+    print(f"Average Recall@{10}: {results_df['recall'].mean():.4f}")
     print("evaluation completed.")
     print("=======================")
 
     print("\n2. Content-Based Filtering")
-
-    print("evaluation of train data...")
+    # train 데이터로 모델 학습
     content_modeling = ContentBasedModeling(train_dataset)
-    content_evaluator = ContentBasedEvaluator(content_modeling, k=10)
-    avg_precision, avg_recall, stats_df = content_evaluator.evaluate_on_random_sample(sample_size=10, k=10)
-    content_evaluator.print_results(mean_precision_score, mae, rmse)
+    
+    # test 데이터로 평가
+    print("Evaluating on test data...")
+    test_evaluator = ContentBasedEvaluator(content_modeling, k=10, test_file=test_dataset)
+    results_df = test_evaluator.evaluate_model(sample_size=100)
+    
+    print("\nPerformance Distribution:")
+    print(results_df[['precision', 'recall']].describe())
+    print(f"\nEvaluation Results:")
+    print(f"Average Precision@{10}: {results_df['precision'].mean():.4f}")
+    print(f"Average Recall@{10}: {results_df['recall'].mean():.4f}")
     print("evaluation completed.")
     print("=======================")
-
-    print("evaluation on test data...")
-    content_modeling = ContentBasedModeling(test_dataset)
-    content_evaluator = ContentBasedEvaluator(content_modeling, k=10)
-    avg_precision, avg_recall, stats_df = content_evaluator.evaluate_on_random_sample(sample_size=10, k=10)
-    content_evaluator.print_results(mean_precision_score, mae, rmse)
-    print("evaluation completed.")
-    print("=======================")
-
 
 if __name__ == "__main__":
     main()

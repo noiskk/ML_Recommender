@@ -1,40 +1,104 @@
-import pandas as pd
+import random
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.feature_extraction.text import CountVectorizer
-from Collaborative_Modeling import ItemBasedModeling
+import pandas as pd
+from ast import literal_eval
 
 class ItemBasedEvaluator:
-    def __init__(self, modeling, k=5):
-        self.modeling = modeling
+    def __init__(self, model, k=10, test_file=None):
+        self.model = model
         self.k = k
-
-    def precision_at_k_for_user(self, user_id):
-        user_data = self.modeling.sampled_data[
-            (self.modeling.sampled_data['user_id'] == user_id) & 
-            (self.modeling.sampled_data['user_rating'] >= 90)
-        ]['listing_id'].unique()
-
-        if len(user_data) == 0:
-            return 0
-        
-        sample_listing_id = user_data[0]
-        recommended_ids = self.modeling.get_similar_listings(sample_listing_id, top_k=self.k)
-        relevant_at_k = set(recommended_ids) & set(user_data)
-        return len(relevant_at_k) / self.k
-
-    def mean_precision_at_k_all_users(self):
-        unique_users = self.modeling.sampled_data['user_id'].unique()
-        precision_scores = [
-            self.precision_at_k_for_user(user_id) for user_id in unique_users
-        ]
-        return np.mean(precision_scores) if precision_scores else 0
-
-    def evaluate(self):
-        self.modeling.create_similarity_matrix()
-        mean_precision_score = self.mean_precision_at_k_all_users()
-        return mean_precision_score
+        if test_file:
+            self.test_data = pd.read_csv(test_file)
+            self.test_data['visitors'] = self.test_data['visitors'].apply(literal_eval)
+        self.user_listings_map = self._create_user_listings_map()
     
-    def print_results(self, mean_precision_score):
-        print("Evaluation completed.")
-        print(f"Mean Precision@{self.k}: {mean_precision_score}")
+    def _create_user_listings_map(self):
+        """유저별 방문한 listing_id 매핑 생성"""
+        user_listings = {}
+        for _, row in self.test_data.iterrows():
+            visitors = row['visitors']
+            listing_id = row['listing_id']
+            for user in visitors:
+                if user not in user_listings:
+                    user_listings[user] = []
+                user_listings[user].append(listing_id)
+        return user_listings
+    
+    def evaluate_single_user(self, user_id, k=10):
+        """단일 사용자에 대한 추천 성능 평가"""
+        user_listings = self.user_listings_map.get(user_id, [])
+        
+        if len(user_listings) < 2:
+            return None
+        
+        # 방문 기록을 train/test로 분할
+        train_size = len(user_listings) // 2
+        train_listings = user_listings[:train_size]
+        test_listings = user_listings[train_size:]
+        
+        try:
+            # 첫 번째 방문 숙소를 기반으로 추천
+            seed_listing = train_listings[0]
+            recommended_ids = self.model.get_similar_listings(seed_listing, top_k=k)
+            
+            # Precision@K 계산
+            hits = len(set(recommended_ids) & set(test_listings))
+            precision = hits / k if k > 0 else 0
+            
+            # Recall 계산
+            recall = hits / len(test_listings) if test_listings else 0
+            
+            return {
+                'user_id': user_id,
+                'precision': precision,
+                'recall': recall,
+                'num_train': len(train_listings),
+                'num_test': len(test_listings),
+                'num_recommendations': len(recommended_ids)
+            }
+        except Exception as e:
+            print(f"Error evaluating user {user_id}: {str(e)}")
+            return None
+    
+    def evaluate_model(self, sample_size=100):
+        """전체 모델 성능 평가"""
+        print(f"\nEvaluating model on {sample_size} users...")
+        
+        # 유효한 사용자 선택
+        valid_users = [
+            user for user, listings in self.user_listings_map.items()
+            if len(listings) >= 2
+        ]
+        
+        if not valid_users:
+            raise ValueError("No valid users found for evaluation")
+        
+        # 샘플 크기 조정
+        sample_size = min(sample_size, len(valid_users))
+        sampled_users = random.sample(valid_users, sample_size)
+        
+        # 평가 실행
+        results = []
+        for i, user_id in enumerate(sampled_users, 1):
+            result = self.evaluate_single_user(user_id, k=self.k)
+            if result:
+                results.append(result)
+            
+            if i % 10 == 0:
+                print(f"Processed {i}/{sample_size} users...")
+        
+        # 결과 분석
+        if not results:
+            return pd.DataFrame()
+        
+        results_df = pd.DataFrame(results)
+        
+        print("\n=== Evaluation Results ===")
+        print(f"Number of users evaluated: {len(results_df)}")
+        print("\nMetrics Summary:")
+        print(f"Average Precision@{self.k}: {results_df['precision'].mean():.4f}")
+        print(f"Average Recall@{self.k}: {results_df['recall'].mean():.4f}")
+        print("\nDetailed Statistics:")
+        print(results_df[['precision', 'recall']].describe())
+        
+        return results_df
