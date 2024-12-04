@@ -4,7 +4,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import OneHotEncoder
 from ast import literal_eval
 
-class ListingRecommender:
+class ContentBasedModeling:
     def __init__(self, filepath):
         # 데이터 로드
         listing = pd.read_csv(filepath)

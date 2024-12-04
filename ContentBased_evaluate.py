@@ -2,9 +2,9 @@ import random
 import numpy as np
 import pandas as pd
 from ast import literal_eval
-from ContentBased_Modeling import ListingRecommender
+from ContentBased_Modeling import ContentBasedModeling
 
-class RecommenderEvaluator:
+class ContentBasedEvaluator:
     def __init__(self, listing_recommender):
         self.listing_recommender = listing_recommender
         self.listing = listing_recommender.listing

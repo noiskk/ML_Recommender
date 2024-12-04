@@ -2,9 +2,9 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import CountVectorizer
-from Collaborative_Modeling import Modeling
+from Collaborative_Modeling import ItemBasedModeling
 
-class ModelEvaluator:
+class ItemBasedEvaluator:
     def __init__(self, modeling, k=5):
         self.modeling = modeling
         self.k = k

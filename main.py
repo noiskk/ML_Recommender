@@ -1,44 +1,28 @@
 from matplotlib import pyplot as plt
 from Processing import DataAdd
-from Collaborative_Modeling import Modeling
-from Collaborative_evaluate import ModelEvaluator
-from ContentBased_Modeling import ListingRecommender
-from ContentBased_evaluate import RecommenderEvaluator
+from Collaborative_Modeling import ItemBasedModeling
+from Collaborative_evaluate import ItemBasedEvaluator
+from ContentBased_Modeling import ContentBasedModeling
+from ContentBased_evaluate import ContentBasedEvaluator
 
 def main():
-    listing = 'data/train_listing_with_visitors.csv'
-    updated_data_path = 'data/train_updated_data_visitors_and_ratings.csv'
-    updated_test_data_path = 'data/test_updated_data_visitors_and_ratings.csv'
+    train_dataset = 'data/train_listing_with_visitors.csv'
+    test_dataset = 'data/test_listing_with_visitors.csv'
 
     print("1. Collaborative Filtering")    
 
     print("evaluation of train data...")
-    modeling = Modeling(updated_data_path)
-    evaluator = ModelEvaluator(modeling, k=5)
-    mean_precision_score, mae, rmse = evaluator.evaluate()
-    evaluator.print_results(mean_precision_score, mae, rmse)
+    item_modeling = ItemBasedModeling(train_dataset)
+    item_evaluator = ItemBasedEvaluator(item_modeling, k=10)
+    mean_precision_score, mae, rmse = item_evaluator.evaluate()
+    item_evaluator.print_results(mean_precision_score, mae, rmse)
     print("evaluation completed.")
     print("=======================")
 
     print("evaluation on test data...")
-    modeling = Modeling(updated_test_data_path)
-    evaluator = ModelEvaluator(modeling, k=5)
-    mean_precision_score, mae, rmse = evaluator.evaluate()
-    evaluator.print_results(mean_precision_score, mae, rmse)
-    print("evaluation completed.")
-    print("=======================")
-
-    print("\n2. Content-Based Filtering")
-
-    # ListingRecommender 객체를 생성 (파일 경로를 실제로 지정)
-    recommender_train = ListingRecommender(listing)
-
-    # RecommenderEvaluator 객체를 생성
-    evaluator = RecommenderEvaluator(recommender_train)
-
-    # 무작위 샘플에 대한 평가
-    avg_precision, avg_recall, stats_df = evaluator.evaluate_on_random_sample(sample_size=10, k=10)
-
+    item_modeling = ItemBasedModeling(test_dataset)
+    item_evaluator = ItemBasedEvaluator(item_modeling, k=10)
+    mean_precision_score, mae, rmse = item_evaluator.evaluate()
     # 성능 분포 확인
     print("\nPerformance Distribution:")
     print(stats_df[['precision', 'recall']].describe())
@@ -46,6 +30,28 @@ def main():
     print(f"Evaluation Results on Random Sample:")
     print(f"Precision@10: {avg_precision:.4f}")
     print(f"Recall@10: {avg_recall:.4f}") 
+
+    print("evaluation completed.")
+    print("=======================")
+
+    print("\n2. Content-Based Filtering")
+
+    print("evaluation of train data...")
+    content_modeling = ContentBasedModeling(train_dataset)
+    content_evaluator = ContentBasedEvaluator(content_modeling, k=10)
+    avg_precision, avg_recall, stats_df = content_evaluator.evaluate_on_random_sample(sample_size=10, k=10)
+    content_evaluator.print_results(mean_precision_score, mae, rmse)
+    print("evaluation completed.")
+    print("=======================")
+
+    print("evaluation on test data...")
+    content_modeling = ContentBasedModeling(test_dataset)
+    content_evaluator = ContentBasedEvaluator(content_modeling, k=10)
+    avg_precision, avg_recall, stats_df = content_evaluator.evaluate_on_random_sample(sample_size=10, k=10)
+    content_evaluator.print_results(mean_precision_score, mae, rmse)
+    print("evaluation completed.")
+    print("=======================")
+
 
 if __name__ == "__main__":
     main()

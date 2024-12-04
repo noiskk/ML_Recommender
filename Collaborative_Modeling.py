@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import CountVectorizer
 
-class Modeling:
+class ItemBasedModeling:
     def __init__(self, data_path):
         self.data_path = data_path
         self.data = pd.read_csv(self.data_path)
