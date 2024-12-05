@@ -2,19 +2,15 @@ import random
 import numpy as np
 import pandas as pd
 from ast import literal_eval
-from ItemBased_Modeling import ItemBasedRecommender
 
 class ItemBasedEvaluator:
-    def __init__(self, item_based_recommender):
-        self.item_based_recommender = item_based_recommender
-        self.listing = item_based_recommender.listing
-        # 초기화 시 user-listing 매핑 생성
+    def __init__(self, recommender):
+        self.recommender = recommender
+        self.listing = recommender.listing
         self.user_listings_map = self._create_user_listings_map()
-        
+    
     def _create_user_listings_map(self):
-        """
-        유저별 방문한 listing_id 매핑을 미리 생성
-        """
+        """유저별 방문한 listing_id 매핑 생성"""
         user_listings = {}
         for _, row in self.listing.iterrows():
             visitors = row['visitors']
@@ -41,24 +37,18 @@ class ItemBasedEvaluator:
         recommended_at_k = set(recommended_ids[:k])
         relevant_set = set(relevant_items)
         hits = len(recommended_at_k & relevant_set)
-        return hits / len(relevant_set)
-    
-    def get_user_visited_listings(self, user_id):
-        """캐시된 매핑에서 유저의 방문 기록 조회"""
-        return self.user_listings_map.get(user_id, [])
+        return hits / len(relevant_set) if relevant_set else 0.0
     
     def evaluate_model(self, sample_size=100, k=10):
-        """최적화된 평가 함수"""
-        # 유효한 유저만 필터링 (2개 이상 방문 기록이 있는 유저)
+        """모델 성능 평가"""
         valid_users = [
             user for user, listings in self.user_listings_map.items()
-            if len(listings) >= 2
+            if len(listings) >= 5
         ]
         
         if not valid_users:
             raise ValueError("No valid users found for evaluation")
         
-        # 샘플 크기 조정
         sample_size = min(sample_size, len(valid_users))
         sampled_users = random.sample(valid_users, sample_size)
         
@@ -70,24 +60,20 @@ class ItemBasedEvaluator:
                 # 방문 기록 가져오기
                 user_visited_listings = self.user_listings_map[user_id]
                 
-                # 방문 기록 분할 (학습용/평가용)
-                train_size = max(1, len(user_visited_listings) // 2)
-                train_listings = user_visited_listings[:train_size]
-                test_listings = user_visited_listings[train_size:]
+                # 추천 생성
+                recommended_ids = self.recommender.get_item_based_recommendations(user_id, topn=k)
                 
-                if not train_listings or not test_listings:
-                    continue
-                
-                # 추천 생성 (개인화된 추천 메서드 사용)
-                _, recommended_ids = self.item_based_recommender.get_top_similar_listings(
-                    user_id=user_id,
-                    topn=k
-                )
-                
+                print(recommended_ids)
+
                 # 성능 평가
-                precision = self.precision_at_k(recommended_ids, test_listings, k)
-                recall = self.recall_at_k(recommended_ids, test_listings, k)
-                
+                precision = self.precision_at_k(recommended_ids, user_visited_listings, k)
+                recall = self.recall_at_k(recommended_ids, user_visited_listings, k)
+
+                print(user_id)
+                print(user_visited_listings)
+                print(precision)
+                print(recall)
+
                 results.append({
                     'user_id': user_id,
                     'total_visits': len(user_visited_listings),

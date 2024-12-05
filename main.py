@@ -10,17 +10,13 @@ def print_progress(start_time, message):
     elapsed_time = time.time() - start_time
     print(f"[{elapsed_time:.2f}s] {message}")
 
-def main():
-    train_data = 'data/train_listing_with_visitors3.csv'
-    test_data = 'data/test_listing_with_visitors.csv'
-    total_start_time = time.time()
-
+def evaluate_item_based(dataset):
     print("\n1. Item-Based Filtering")
-    print_progress(total_start_time, "Item-Based 모델링 시작...")
+    print_progress(time.time(), "Item-Based 모델링 시작...")
     
     # 데이터 로드 및 추천 시스템 초기화
     model_start_time = time.time()
-    item_based_recommender = ItemBasedRecommender(test_data)
+    item_based_recommender = ItemBasedRecommender(dataset)
     print_progress(model_start_time, "Item-Based 모델 초기화 완료")
     
     # 유사도 행렬 계산
@@ -36,20 +32,20 @@ def main():
     # 모델 평가
     print("\n평가 진행 중...")
     precision, recall, detailed_results = evaluator.evaluate_model(
-        sample_size=10,
-        k=10
+        sample_size=20,
+        k=30
     )
     print_progress(eval_start_time, "Item-Based 평가 완료")
 
-    user_id_to_check = 49931038  # 확인하고 싶은 사용자 ID로 변경하세요.
-    item_based_recommender.print_recommendations(user_id_to_check, topn=10)
+    return precision, recall, detailed_results
 
+def evaluate_content_based(dataset):
     print("\n2. Content-Based Filtering")
     content_start_time = time.time()
     print_progress(content_start_time, "Content-Based 모델링 시작...")
 
     # Content-Based 모델 초기화
-    recommender_train = ListingRecommender(test_data)
+    recommender_train = ListingRecommender(dataset)
     print_progress(content_start_time, "Content-Based 모델 초기화 완료")
 
     # 평가기 초기화
@@ -60,13 +56,22 @@ def main():
     # 평가 진행
     print("\n평가 진행 중...")
     avg_precision, avg_recall, stats_df = evaluator.evaluate_model(
-        sample_size=50,
-        k=10
+        sample_size=20,
+        k=30
     )
     print_progress(content_eval_time, "Content-Based 평가 완료")
 
-    # 전체 실행 시간
-    print(f"\n전체 실행 시간: {time.time() - total_start_time:.2f}초")
+    return avg_precision, avg_recall, stats_df
+
+def main():
+    train_data = 'data/train_listing_with_visitors3.csv'
+    test_data = 'data/test_listing_with_visitors.csv'
+
+    # Item-Based 평가
+    precision, recall, detailed_results = evaluate_item_based(test_data)
+
+    # Content-Based 평가
+    avg_precision, avg_recall, stats_df = evaluate_content_based(test_data)
 
     # 결과 출력
     print("\n=== 최종 결과 ===")

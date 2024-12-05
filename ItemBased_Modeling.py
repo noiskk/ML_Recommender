@@ -137,13 +137,13 @@ class ItemBasedRecommender:
         similar_items = self.item_similarity_matrix[listing_index]
         
         # 자기 자신 제외 및 유사도 기준 정렬
-        similar_indices = similar_items.argsort()[::-1][1:topn+1]
+        similar_indices = similar_items.argsort()[::-1][:topn]
         
         # 추천 리스팅 선택
         recommended_listings = self.listing.iloc[similar_indices]
         recommended_ids = recommended_listings['listing_id'].tolist()
         
-        return recommended_listings, recommended_ids
+        return recommended_ids
     
 
     
