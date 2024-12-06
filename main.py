@@ -64,14 +64,13 @@ def evaluate_content_based(dataset):
     return avg_precision, avg_recall, stats_df
 
 def main():
-    train_data = 'data/train_listing_with_visitors3.csv'
-    test_data = 'data/test_listing_with_visitors.csv'
+    dataset = 'data/listing_with_visitors.csv'
 
     # Item-Based 평가
-    precision, recall, detailed_results = evaluate_item_based(test_data)
+    precision, recall, detailed_results = evaluate_item_based(dataset)
 
     # Content-Based 평가
-    avg_precision, avg_recall, stats_df = evaluate_content_based(test_data)
+    avg_precision, avg_recall, stats_df = evaluate_content_based(dataset)
 
     # 결과 출력
     print("\n=== 최종 결과 ===")

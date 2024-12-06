@@ -68,12 +68,6 @@ class ItemBasedEvaluator:
                 # 성능 평가
                 precision = self.precision_at_k(recommended_ids, user_visited_listings, k)
                 recall = self.recall_at_k(recommended_ids, user_visited_listings, k)
-
-                print(user_id)
-                print(user_visited_listings)
-                print(precision)
-                print(recall)
-
                 results.append({
                     'user_id': user_id,
                     'total_visits': len(user_visited_listings),
