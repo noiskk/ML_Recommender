@@ -63,8 +63,6 @@ class ItemBasedEvaluator:
                 # 추천 생성
                 recommended_ids = self.recommender.get_item_based_recommendations(user_id, topn=k)
                 
-                print(recommended_ids)
-
                 # 성능 평가
                 precision = self.precision_at_k(recommended_ids, user_visited_listings, k)
                 recall = self.recall_at_k(recommended_ids, user_visited_listings, k)

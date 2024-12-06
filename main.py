@@ -3,6 +3,7 @@ from ContentBased_Modeling import ListingRecommender
 from ContentBased_evaluate import RecommenderEvaluator
 from ItemBased_Modeling import ItemBasedRecommender
 from ItemBased_evaluate import ItemBasedEvaluator
+from Preprocessing import Preprocessing
 import time
 
 def print_progress(start_time, message):
@@ -32,8 +33,8 @@ def evaluate_item_based(dataset):
     # 모델 평가
     print("\n평가 진행 중...")
     precision, recall, detailed_results = evaluator.evaluate_model(
-        sample_size=20,
-        k=30
+        sample_size=50,
+        k=15
     )
     print_progress(eval_start_time, "Item-Based 평가 완료")
 
@@ -56,33 +57,41 @@ def evaluate_content_based(dataset):
     # 평가 진행
     print("\n평가 진행 중...")
     avg_precision, avg_recall, stats_df = evaluator.evaluate_model(
-        sample_size=20,
-        k=30
+        sample_size=50,
+        k=15
     )
     print_progress(content_eval_time, "Content-Based 평가 완료")
 
     return avg_precision, avg_recall, stats_df
 
 def main():
+
+    # 파일 경로 지정
+    listing_path = "data/listings.csv"
+    review_path = "data/reviews.csv"
+    
+    # visitors 컬럼 추가
+    updated_listing_df = Preprocessing.add_visitors_to_listing(listing_path, review_path)
+    
+    # 결과 저장
+    updated_listing_df.to_csv("data/listing_with_visitors.csv", index=False)
     dataset = 'data/listing_with_visitors.csv'
 
     # Item-Based 평가
     precision, recall, detailed_results = evaluate_item_based(dataset)
 
     # Content-Based 평가
-    avg_precision, avg_recall, stats_df = evaluate_content_based(dataset)
+    avg_precision, avg_recall, _ = evaluate_content_based(dataset)
 
     # 결과 출력
     print("\n=== 최종 결과 ===")
     print("\nItem-Based Filtering 결과:")
-    print(detailed_results[['precision', 'recall']].describe())
-    print(f"Precision@10: {precision:.4f}")
-    print(f"Recall@10: {recall:.4f}")
+    print(f"Precision@15: {precision:.4f}")
+    print(f"Recall@15: {recall:.4f}")
 
     print("\nContent-Based Filtering 결과:")
-    print(stats_df[['precision', 'recall']].describe())
-    print(f"Precision@10: {avg_precision:.4f}")
-    print(f"Recall@10: {avg_recall:.4f}")
+    print(f"Precision@15: {avg_precision:.4f}")
+    print(f"Recall@15: {avg_recall:.4f}")
 
 if __name__ == "__main__":
     main()
