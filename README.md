@@ -20,3 +20,6 @@ sparse matrix 사용, batch size 조절해서 해결.
 ## Evaluation
 Precision
 Recall
+
+## 개선할점
+하이브리드 방식
