@@ -1,4 +1,6 @@
-# 2024-2 Machine Learning Team Project
+# 2024-2 Machine Learning
+<br>
+
 ## Airbnb accommodation recommendations
 
 ## Dataset: Seattle Airbnb Open Data
